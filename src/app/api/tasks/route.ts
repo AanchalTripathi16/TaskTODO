@@ -49,8 +49,9 @@ export async function POST(request: Request) {
   const validation = createTaskSchema.safeParse(body);
 
   if (!validation.success) {
+    const firstIssue = validation.error.issues[0];
     return NextResponse.json(
-      { message: validation.error.errors[0]?.message ?? "Invalid payload" },
+      { message: firstIssue?.message ?? "Invalid payload" },
       { status: 400 }
     );
   }

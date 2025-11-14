@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth-options";
 import { toggleTask } from "@/server/task-service";
 
-interface RouteParams {
-  params: {
+interface RouteContext {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
