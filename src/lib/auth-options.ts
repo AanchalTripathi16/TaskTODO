@@ -16,12 +16,13 @@ requiredEnv.forEach((key) => {
   }
 });
 
-// Get NEXTAUTH_URL with fallback for development
-const nextAuthUrl =
-  process.env.NEXTAUTH_URL ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000");
+// Ensure NEXTAUTH_URL is available - NextAuth requires this for OAuth callbacks
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
+  // Vercel automatically provides VERCEL_URL, but we need NEXTAUTH_URL
+  console.warn(
+    "NEXTAUTH_URL not set. Using VERCEL_URL as fallback. Please set NEXTAUTH_URL in Vercel environment variables."
+  );
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -39,34 +40,28 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    redirect: ({ url, baseUrl }) => {
-      // Use NEXTAUTH_URL if available, otherwise use baseUrl from NextAuth
-      const base = nextAuthUrl || baseUrl;
-
-      // If url is relative, return it as is
+    async signIn({ account, profile }) {
+      // Allow sign in
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs
       if (url.startsWith("/")) {
         return url;
       }
 
+      // Allow URLs from the same origin
       try {
-        const parsed = new URL(url);
-        const baseParsed = new URL(base);
-
-        // Check if the URL belongs to our domain
-        if (parsed.origin === baseParsed.origin) {
-          return parsed.pathname + parsed.search + parsed.hash;
-        }
-
-        // If it's a full URL from our domain, extract the path
-        if (url.startsWith(base)) {
-          return url.replace(base, "") || "/";
+        if (new URL(url).origin === new URL(baseUrl).origin) {
+          return url;
         }
       } catch {
-        // ignore parsing errors for relative urls
+        // If URL parsing fails, return baseUrl
+        return baseUrl;
       }
 
-      // Default redirect to home
-      return "/";
+      // Default to baseUrl
+      return baseUrl;
     },
     session: ({ session, token }) => {
       if (session.user && token?.sub) {
@@ -76,4 +71,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  debug: process.env.NODE_ENV === "development",
 };
