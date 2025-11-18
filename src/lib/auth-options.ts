@@ -24,7 +24,24 @@ console.log("[NextAuth Config] Environment Check:", {
   hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
   hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
   hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+  hasDatabaseUrl: !!process.env.DATABASE_URL,
+  databaseUrlPreview: process.env.DATABASE_URL
+    ? `${process.env.DATABASE_URL.substring(0, 20)}...`
+    : "NOT SET",
 });
+
+// Test database connection
+prisma
+  .$connect()
+  .then(() => {
+    console.log("[NextAuth Config] Database connection successful");
+  })
+  .catch((error) => {
+    console.error("[NextAuth Config] Database connection failed:", error);
+    console.error(
+      "[NextAuth Config] This will cause OAuth callback errors. Please check DATABASE_URL in Vercel."
+    );
+  });
 
 // Ensure NEXTAUTH_URL is available - NextAuth requires this for OAuth callbacks
 if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
@@ -69,12 +86,20 @@ export const authOptions: NextAuthOptions = {
       });
 
       try {
+        // Test database connection before allowing sign in
+        await prisma.$connect();
+        console.log("[NextAuth Callback] Database connection verified");
+
         // Allow sign in
         const result = true;
         console.log("[NextAuth Callback] signIn result:", result);
         return result;
       } catch (error) {
         console.error("[NextAuth Callback] signIn error:", error);
+        console.error(
+          "[NextAuth Callback] Database connection issue. Check DATABASE_URL in Vercel environment variables."
+        );
+        // Don't throw - let NextAuth handle it, but log the error
         throw error;
       }
     },
@@ -138,6 +163,21 @@ export const authOptions: NextAuthOptions = {
   logger: {
     error(code, metadata) {
       console.error("[NextAuth Error]", { code, metadata });
+
+      // Log specific error details for callback errors
+      if (code === "CALLBACK_OAUTH_ERROR" || code === "CALLBACK_ROUTE_ERROR") {
+        console.error(
+          "[NextAuth Error] OAuth Callback Error Details:",
+          JSON.stringify(metadata, null, 2)
+        );
+        console.error(
+          "[NextAuth Error] Possible causes:",
+          "1. DATABASE_URL not set or incorrect in Vercel",
+          "2. Database connection timeout",
+          "3. PrismaAdapter unable to save user/account",
+          "4. NEXTAUTH_URL mismatch"
+        );
+      }
     },
     warn(code) {
       console.warn("[NextAuth Warn]", { code });

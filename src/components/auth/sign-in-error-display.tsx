@@ -19,7 +19,7 @@ export function SignInErrorDisplay({
 
   const errorMessages: Record<string, string> = {
     Callback:
-      "OAuth callback failed. Please check that the callback URL in Google OAuth console matches: https://task-todo-dun-one.vercel.app/api/auth/callback/google",
+      "OAuth callback failed. This is usually caused by a database connection issue. Please check: 1) DATABASE_URL is set in Vercel, 2) Database is accessible from Vercel, 3) Check Vercel function logs for detailed error messages.",
     Configuration:
       "There is a problem with the server configuration. Check if your options are correct.",
     AccessDenied:
