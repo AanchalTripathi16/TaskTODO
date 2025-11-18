@@ -8,14 +8,16 @@ const handler = NextAuth(authOptions);
 // Add logging wrapper for debugging
 const loggedHandler = async (
   req: NextRequest,
-  context: { params: { nextauth: string[] } }
+  context: { params: Promise<{ nextauth: string[] }> }
 ) => {
   const url = new URL(req.url);
+  const params = await context.params;
+  
   console.log("[NextAuth Route] Request:", {
     method: req.method,
     pathname: url.pathname,
     searchParams: Object.fromEntries(url.searchParams),
-    nextauthParams: context.params.nextauth,
+    nextauthParams: params.nextauth,
     headers: {
       host: req.headers.get("host"),
       origin: req.headers.get("origin"),
