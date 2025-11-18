@@ -1,12 +1,18 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { formatDate } from "@/helpers/date-format";
 import type { TaskItemProps } from "@/interfaces/task.interface";
 
 export function TaskItem({ task, onToggle, disabled }: TaskItemProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [formattedDate, setFormattedDate] = useState<string>("");
+
+  useEffect(() => {
+    setFormattedDate(formatDate(task.createdAt));
+  }, [task.createdAt]);
 
   const handleToggle = async () => {
     setIsLoading(true);
@@ -60,7 +66,7 @@ export function TaskItem({ task, onToggle, disabled }: TaskItemProps) {
             {task.title}
           </p>
           <p className="text-xs text-slate-500">
-            Added {new Date(task.createdAt).toLocaleString()}
+            {formattedDate ? `Added ${formattedDate}` : ""}
           </p>
         </div>
       </div>
