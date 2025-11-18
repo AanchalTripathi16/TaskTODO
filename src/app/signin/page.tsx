@@ -3,9 +3,15 @@ import { getServerSession } from "next-auth";
 
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { authOptions } from "@/lib/auth-options";
+import { SignInErrorDisplay } from "@/components/auth/sign-in-error-display";
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
+}) {
   const session = await getServerSession(authOptions);
+  const params = await searchParams;
 
   if (session?.user?.id) {
     redirect("/tasks");
@@ -26,6 +32,9 @@ export default async function SignInPage() {
             with Google to get started.
           </p>
         </div>
+        {params.error && (
+          <SignInErrorDisplay error={params.error} callbackUrl={params.callbackUrl} />
+        )}
         <SignInButton />
         <p className="text-xs text-slate-500">
           By continuing you agree to the Terms of Service and Privacy Policy.

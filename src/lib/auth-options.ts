@@ -38,7 +38,7 @@ if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
 const expectedCallbackUrl = process.env.NEXTAUTH_URL
   ? `${process.env.NEXTAUTH_URL}/api/auth/callback/google`
   : process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}/api/auth/callback/google`
+  ? `https://task-todo-dun-one.vercel.app/api/auth/callback/google`
   : "http://localhost:3000/api/auth/callback/google";
 
 console.log("[NextAuth Config] Expected Callback URL:", expectedCallbackUrl);
